@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1545576911517.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3131379482",
+    "id" : "46F8130C",
+    "lastKnownWriteTime" : 1545576916,
+    "last_content_update" : 1545576916867,
+    "path" : "~/RProjects/ShinyApp/data.txt",
+    "project_path" : "data.txt",
+    "properties" : {
+        "cursorPosition" : "1,0",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "text"
+}
