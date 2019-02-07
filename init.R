@@ -1,0 +1,7 @@
+install.packages("shiny", dependencies=TRUE)  
+install.packages("tm", dependencies=TRUE)  
+install.packages("SnowballC", dependencies=TRUE) 
+install.packages("pdftools", dependencies=TRUE) 
+install.packages("ggplot2", dependencies=TRUE) 
+install.packages("plyr", dependencies=TRUE) 
+install.packages("class", dependencies=TRUE) 

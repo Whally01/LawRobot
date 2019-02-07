@@ -1,36 +1,39 @@
 library(tm)
 library(SnowballC)
 library(pdftools)
+library(wordcloud)
 library(ggplot2)
-
-#??????? ??????????????? ????????? ??????? ??????????
+library(plyr)
+library(class)
+Sys.setlocale("LC_CTYPE", "russian")
+#функция предварительной обработки корпуса документов
 preprocessing <- function(doc_corpus) {
   doc_corpus <- tm_map(doc_corpus, removePunctuation)
-  doc_corpus <- tm_map(doc_corpus, removeNumbers) #? ??????? ????? ?? ???????????!!!
-  doc_corpus <- tm_map(doc_corpus, stripWhitespace) #???????? ????????
+  doc_corpus <- tm_map(doc_corpus, removeNumbers) #В БУДУЩЕМ МОЖЕТ НЕ ПОНАДОБИТСЯ!!!
+  doc_corpus <- tm_map(doc_corpus, stripWhitespace) #удаление пробелов
   doc_corpus <- tm_map(doc_corpus, content_transformer(scan_tokenizer))
   doc_corpus <- tm_map(doc_corpus, content_transformer(function(x) {x <- wordStem(x, language = "ru")}))
-  doc_corpus <- tm_map(doc_corpus, content_transformer(tolower)) #?????????? ? ?????? ???????
+  doc_corpus <- tm_map(doc_corpus, content_transformer(tolower)) #содержимое в нижний регистр
   doc_corpus <- tm_map(doc_corpus, removeWords, stopwords("russian"))
   return(doc_corpus)
 }
 
-cname1 <- file.path("/home/dr/Documents/обучение/оспаривание действий судебных приставов")
+cname1 <- file.path("D:/RProjects/LawRobot/training/osparivanie deistvii/")
 docs1 <- Corpus(DirSource(cname1), readerControl=list(reader=readPDF))
 meta(docs1, "class") <- "FSSP"
 docs1 <- preprocessing(docs1)
 
-cname2 <- file.path("/home/dr/Documents/обучение/оспаривание решений антимонопольных органов")
+cname2 <- file.path("D:/RProjects/LawRobot/training/osparivanie reshenii/")
 docs2 <- Corpus(DirSource(cname2), readerControl=list(reader=readPDF))
 meta(docs2, "class") <- "FAS"
 docs2 <- preprocessing(docs2)
 
-cname3 <- file.path("/home/dr/Documents/обучение/поставка")
+cname3 <- file.path("D:/RProjects/LawRobot/training/postavka/")
 docs3 <- Corpus(DirSource(cname3), readerControl=list(reader=readPDF))
 meta(docs3, "class") <- "POSTAVKI"
 docs3 <- preprocessing(docs3)
 
-cname4 <- file.path("/home/dr/Documents/обучение/привлечение к ответственности за нарушение условий лицензирования")
+cname4 <- file.path("D:/RProjects/LawRobot/training/privlichenie/")
 docs4 <- Corpus(DirSource(cname4), readerControl=list(reader=readPDF))
 meta(docs4, "class") <- "LICENZIYA"
 docs4 <- preprocessing(docs4)
@@ -47,7 +50,7 @@ createDF <- function(tdm, category) {
   return(doc_df)
 }
 
-#???????? ????-??????? ? ???, ?????? ????????? (!!! ????? ????? ??????????)
+#создание дата-фреймов и ТДМ, фильтр признаков (!!! нужно будет доработать)
 FSSP_tdm <- TermDocumentMatrix(docs1)
 FSSP_tdm <- removeSparseTerms(FSSP_tdm, 1 - (37/length(docs1)))
 FSSP_tdm
@@ -71,17 +74,17 @@ LICENZIYA_df <- createDF(LICENZIYA_tdm, "LICENZIYA")
 dfStack <- rbind.fill(FSSP_df, FAS_df, POSTAVKI_df, LICENZIYA_df)
 dfStack[is.na(dfStack)] <- 0
 
-#???????? ??????? ?? ???????? ? ????
+#разбивка выборки на обучение и тест
 indTrain <- sample(nrow(dfStack), ceiling(nrow(dfStack) * 0.7))
 indTest <- (1:nrow(dfStack))[-indTrain]
 dType <- dfStack[, "doccategory"]
 alldata <- dfStack[, !colnames(dfStack) %in% "doccategory"]
 
+alldata[indTest, ]
 KNNprediction <- knn(alldata[indTrain, ], alldata[indTest, ], dType[indTrain])
-
 confusionMat <- table(predicted = KNNprediction, Actual = dType[indTest])
-confusionMat
+
 accuracy <- sum(diag(confusionMat))/(length(indTest))
 print(accuracy)
 
-#???????? ? ???????? ???????? ??????? (?????? ?????), ????? ????? ??????
+#загрузка и проверка реальной выборки (одного файла), вывод метки класса
