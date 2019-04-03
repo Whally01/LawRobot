@@ -7,8 +7,8 @@ shinyServer(
 function(input, output) {
     observe({
       req(input$pdfFile)
-      file.copy(input$pdfFile$datapath, "www.pdf", overwrite = T)
-      result <- go("www.pdf")
+      file.copy(input$pdfFile$datapath, "copy.pdf", overwrite = T)
+      result <- go("copy.pdf")
       print(result)
      
       output$result <- renderText({
