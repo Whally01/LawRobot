@@ -6,6 +6,7 @@ library(ggplot2)
 library(plyr)
 library(class)
 Sys.setlocale("LC_CTYPE", "russian")
+
 #функция предварительной обработки корпуса документов
 preprocessing <- function(doc_corpus) {
   doc_corpus <- tm_map(doc_corpus, removePunctuation)
@@ -80,11 +81,31 @@ indTest <- (1:nrow(dfStack))[-indTrain]
 dType <- dfStack[, "doccategory"]
 alldata <- dfStack[, !colnames(dfStack) %in% "doccategory"]
 
-alldata[indTest, ]
 KNNprediction <- knn(alldata[indTrain, ], alldata[indTest, ], dType[indTrain])
-confusionMat <- table(predicted = KNNprediction, Actual = dType[indTest])
 
+confusionMat <- table(predicted = KNNprediction, Actual = dType[indTest])
+confusionMat
 accuracy <- sum(diag(confusionMat))/(length(indTest))
 print(accuracy)
 
 #загрузка и проверка реальной выборки (одного файла), вывод метки класса
+
+go <- function(new_doc){
+  #new_doc <- file.choose(new = FALSE) #запуск интерактивного окна выбора файла
+  docs_new <- Corpus(URISource(new_doc), readerControl=list(reader=readPDF))
+  docs_new <- preprocessing(docs_new)
+  new_tdm <- TermDocumentMatrix(docs_new) 
+  new_doc_df <- as.data.frame(t(data.matrix(new_tdm)))
+  
+  #Left outer join
+  alldata_test <- alldata * 0
+  inter <- intersect(colnames(alldata_test), colnames(new_doc_df))
+  inter_new_doc_df <- new_doc_df[ , inter]
+  new_data <- merge(x=alldata_test, y=inter_new_doc_df, by=inter, all.y=TRUE)
+  new_data[is.na(new_data)] <- 0
+  
+  new_prediction <- knn(alldata[indTrain, ], new_data, dType[indTrain])
+  new_prediction
+  return(as.character(new_prediction))
+}
+
